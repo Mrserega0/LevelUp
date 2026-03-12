@@ -75,110 +75,174 @@ static const std::string PROGRESS_PATH = "assets\\save\\progress.txt"; // Пут
 // -------- MENU (логика + рисование) --------
 struct MenuUI
 {
-    sf::Font font; // Шрифт для всех текстов меню (Play, Exit, Back, Level X)
+    sf::Font font;
 
-    sf::RectangleShape playBtn, exitBtn; // Кнопки главного меню
-    sf::RectangleShape backBtn;          // Кнопка "Back" на экране уровней
+    sf::RectangleShape playBtn, exitBtn, backBtn;
+    sf::Text playTxt, exitTxt, backTxt;
 
-    sf::Text playTxt, exitTxt, backTxt; // Тексты для кнопок
+    std::vector<LevelButton> levelButtons;
 
-    std::vector<LevelButton> levelButtons; // Список кнопок уровней
+    const sf::Vector2f BTN_SIZE = {200.f, 60.f};
+
+    const sf::Color BTN_COLOR = sf::Color(255, 215, 0);
+    const sf::Color BTN_HOVER = sf::Color(255, 215, 0);
+    const sf::Color BTN_LOCKED = sf::Color(105, 105, 105);
+
+    const sf::Color TEXT_COLOR = sf::Color(128, 128, 128);
+    const sf::Color TEXT_LOCKED = sf::Color(105, 105, 105);
 
     void makeButton(sf::RectangleShape &r, sf::Text &t,
                     sf::Vector2f pos, const sf::String &label)
     {
-        // Настройка прямоугольника кнопки
-        r.setSize({200, 60});                  // Размер кнопки
-        r.setPosition(pos);                    // Позиция на экране
-        r.setFillColor(sf::Color(60, 60, 60)); // Цвет заливки
-        r.setOutlineThickness(2);              // Толщина рамки
-        r.setOutlineColor(sf::Color::White);   // Цвет рамки
+        r.setSize(BTN_SIZE);
+        r.setPosition(pos);
 
-        // Настройка текста кнопки
-        t.setFont(font);                  // Шрифт
-        t.setString(label);               // Надпись
-        t.setCharacterSize(28);           // Размер букв
-        t.setFillColor(sf::Color::White); // Цвет текста
+        r.setFillColor(BTN_COLOR);
+        r.setOutlineThickness(2);
+        r.setOutlineColor(sf::Color(255, 255, 255));
 
-        // Центрируем текст внутри прямоугольника
-        auto b = t.getLocalBounds();                             // Границы текста (локальные)
-        t.setOrigin(b.left + b.width / 2, b.top + b.height / 2); // Ставим origin в центр текста
-        t.setPosition(pos.x + 100, pos.y + 30);                  // Ставим текст в центр кнопки (200x60 => +100 +30)
+        t.setFont(font);
+        t.setString(label);
+        t.setCharacterSize(28);
+        t.setFillColor(TEXT_COLOR);
+
+        auto b = t.getLocalBounds();
+
+        t.setOrigin(
+            b.left + b.width / 2.f,
+            b.top + b.height / 2.f);
+
+        t.setPosition(
+            pos.x + BTN_SIZE.x / 2.f,
+            pos.y + BTN_SIZE.y / 2.f);
+
+        t.setOutlineThickness(1);
+        t.setOutlineColor(sf::Color(255, 255, 255));
     }
 
-    void initLevels(int maxLevels)
+    void createLevelColumn(int start, int end, float x)
     {
-        for (int i = 1; i <= maxLevels; ++i)
+        for (int i = start; i <= end; i++)
         {
             LevelButton lb;
-            lb.level = i; // номер уровня
+            lb.level = i;
 
-            // Создаём кнопку и текст для уровня
-            makeButton(lb.btn, lb.txt,
-                       {250.f, -10.f + i * 80.f},     // позиция (лесенкой вниз)
-                       "Level " + std::to_string(i)); // текст
+            float y = 80.f + (i - start) * 80.f;
 
-            levelButtons.push_back(lb); // добавляем в список
+            makeButton(
+                lb.btn,
+                lb.txt,
+                {x, y},
+                "Level " + std::to_string(i));
+
+            levelButtons.push_back(lb);
         }
+    }
+
+    void initLevels(int r1, int r2, int r3, int r4)
+    {
+        createLevelColumn(1, r1, 250.f);
+        createLevelColumn(8, r2, 500.f);
+        createLevelColumn(15, r3, 750.f);
+        createLevelColumn(22, r4, 1000.f);
     }
 
     void init()
     {
-        font.loadFromFile("assets\\fonts\\COOPBL.TTF"); // Загружаем шрифт из файла
+        font.loadFromFile("assets/fonts/COOPBL.TTF");
 
-        // Создаём кнопки главного меню
-        makeButton(playBtn, playTxt, {540, 260}, "Play");
-        makeButton(exitBtn, exitTxt, {540, 340}, "Exit");
-        // Кнопка назад (на экране выбора уровней)
-        makeButton(backBtn, backTxt, {540, 530}, "Back");
+        makeButton(playBtn, playTxt, {620, 320}, "Play");
+        makeButton(exitBtn, exitTxt, {620, 400}, "Exit");
+        makeButton(backBtn, backTxt, {620, 670}, "Back");
 
-        initLevels(5);
+        initLevels(7, 14, 21, 28);
     }
 
     void handleEvent(const sf::Event &e, sf::RenderWindow &window)
     {
-        // Реагируем ТОЛЬКО на нажатие ЛКМ
         if (e.type != sf::Event::MouseButtonPressed ||
             e.mouseButton.button != sf::Mouse::Left)
             return;
 
-        // Координаты мыши переводим в координаты мира/вида (учитывает view)
         sf::Vector2f m = window.mapPixelToCoords(
             {e.mouseButton.x, e.mouseButton.y});
 
         if (screen == Screen::Main)
         {
-            // Клик по Play => перейти на экран уровней
             if (playBtn.getGlobalBounds().contains(m))
                 screen = Screen::Levels;
 
-            // Клик по Exit => закрыть окно
             if (exitBtn.getGlobalBounds().contains(m))
                 window.close();
         }
+
         else if (screen == Screen::Levels)
         {
-            // Back => вернуться в главное меню
             if (backBtn.getGlobalBounds().contains(m))
                 screen = Screen::Main;
 
-            // Проверяем клик по каждой кнопке уровня
             for (auto &lb : levelButtons)
             {
                 if (lb.btn.getGlobalBounds().contains(m))
                 {
-                    // Запускаем уровень только если он открыт по прогрессу
                     if (progress.unlockedLevel >= lb.level)
                     {
-                        selectedLevel = lb.level; // запоминаем выбор
+                        selectedLevel = lb.level;
 
-                        // lastLevel нужен, чтобы в следующий запуск помнить выбранный уровень
                         progress.lastLevel = lb.level;
-                        progress.save(PROGRESS_PATH); // сохраняем
+                        progress.save(PROGRESS_PATH);
 
-                        screen = Screen::Game; // переходим в игру
+                        screen = Screen::Game;
                     }
                 }
+            }
+        }
+    }
+
+    void update(sf::RenderWindow &window)
+    {
+        sf::Vector2f mouse =
+            window.mapPixelToCoords(
+                sf::Mouse::getPosition(window));
+
+        auto hover = [&](sf::RectangleShape &btn, sf::Text &txt)
+        {
+            if (btn.getGlobalBounds().contains(mouse))
+            {
+                btn.setFillColor(BTN_HOVER);
+                btn.setScale(1.05f, 1.05f);
+                txt.setFillColor(sf::Color::Yellow);
+            }
+            else
+            {
+                btn.setFillColor(BTN_COLOR);
+                btn.setScale(1.f, 1.f);
+                txt.setFillColor(TEXT_COLOR);
+            }
+        };
+
+        if (screen == Screen::Main)
+        {
+            hover(playBtn, playTxt);
+            hover(exitBtn, exitTxt);
+        }
+
+        else if (screen == Screen::Levels)
+        {
+            hover(backBtn, backTxt);
+
+            for (auto &lb : levelButtons)
+            {
+                bool unlocked = progress.unlockedLevel >= lb.level;
+
+                if (!unlocked)
+                {
+                    lb.btn.setFillColor(BTN_LOCKED);
+                    lb.txt.setFillColor(TEXT_LOCKED);
+                    continue;
+                }
+
+                hover(lb.btn, lb.txt);
             }
         }
     }
@@ -187,30 +251,21 @@ struct MenuUI
     {
         if (screen == Screen::Main)
         {
-            // Рисуем 2 кнопки и их текст
             window.draw(playBtn);
             window.draw(playTxt);
+
             window.draw(exitBtn);
             window.draw(exitTxt);
         }
+
         else if (screen == Screen::Levels)
         {
-            // Рисуем уровни циклом
             for (auto &lb : levelButtons)
             {
-                bool unlocked = progress.unlockedLevel >= lb.level; // доступен ли уровень
-
-                // Меняем цвета в зависимости от доступности
-                lb.btn.setFillColor(unlocked ? sf::Color(60, 60, 60)
-                                             : sf::Color(40, 40, 40));
-                lb.txt.setFillColor(unlocked ? sf::Color::White
-                                             : sf::Color(120, 120, 120));
-
                 window.draw(lb.btn);
                 window.draw(lb.txt);
             }
 
-            // Back рисуем отдельно
             window.draw(backBtn);
             window.draw(backTxt);
         }
@@ -220,33 +275,36 @@ struct MenuUI
 struct Level
 {
     int tileSize = 16;
-    int mapWidth = 0;  // ширина карты в тайлах (не в пикселях!)
-    int mapHeight = 0; // высота карты в тайлах (не в пикселях!)
+    int mapWidth = 0;
+    int mapHeight = 0;
 
-    // ===== Коллизия =====
-    std::vector<sf::FloatRect> walls;  // прямоугольники стен для коллизий (на основе блоков)
-    std::vector<sf::FloatRect> spikes; // прямоугольники шипов для коллизий (на основе объектов)
+    std::vector<sf::FloatRect> walls;
+    std::vector<sf::FloatRect> spikes;
+    std::vector<sf::FloatRect> spikesR;
+    std::vector<sf::Sprite> backgroundSprites;
+    std::vector<sf::Sprite> blockSprites;
+    std::vector<sf::Sprite> objectSprites;
+    std::vector<sf::Sprite> shipSprite;
+    sf::Texture texBlocks;
+    sf::Texture texFons;
+    sf::Texture texObj;
 
-    // ===== Графика =====
-    std::vector<sf::Sprite> backgroundSprites; // спрайты для тайлов фона (не коллизия, просто графика)
-    std::vector<sf::Sprite> blockSprites;      // спрайты для тайлов блоков (стены, коллизия)
-    std::vector<sf::Sprite> objectSprites;     // спрайты для тайлов объектов (шипы, портал, спавн - могут быть коллизией, а могут просто графикой)
+    sf::Vector2f playerSpawn{0.f, 0.f};
+    sf::FloatRect exitRect;
+    bool hasExit = false;
 
-    // ===== Текстуры =====
-    sf::Texture texBlocks; // текстура для блоков (стен)
-    sf::Texture texFons;   // текстура для фонов (графика без коллизии)
-    sf::Texture texObj;    // текстура для объектов (шипы, портал, спавн)
-
-    // ===== Логика =====
-    sf::Vector2f playerSpawn{0.f, 0.f}; // Координаты спавна игрока (на основе объекта "спавн" в JSON)
-    sf::FloatRect exitRect;             // Прямоугольник выхода (на основе объекта "портал" в JSON)
-    bool hasExit = false;               // Есть ли вообще выход на уровне (на всякий случай, если в JSON нет портала)
-
-    struct TilesetInfo // Информация о тайлсете из JSON (firstgid + указатель на текстуру), чтобы правильно отображать тайлы из разных тайлсетов
+    struct TilesetInfo
     {
-        int firstGid;         // Первый GID этого тайлсета (из JSON)
-        sf::Texture *texture; // Указатель на текстуру этого тайлсета
+        int firstGid;
+        sf::Texture *texture;
     };
+
+    struct Coin
+    {
+        sf::FloatRect hitbox;
+        sf::Sprite sprite;
+    };
+    std::vector<Coin> coins;
 
     struct Trigger
     {
@@ -258,18 +316,14 @@ struct Level
         bool once = true;
         bool activated = false;
         float cooldown = 0.f;
-        float delay = 0.f;    // задержка перед выполнением
-        float timer = 0.f;    // таймер ожидания
-        bool pending = false; // ждём выполнение
+        float delay = 0.f;
+        float timer = 0.f;
+        bool pending = false;
         int chain = -1;
         int tile = 0;
     };
-
-    std::vector<TilesetInfo> tilesets; // Список тайлсетов, которые используются на уровне (чтобы по GID понять, какую текстуру использовать)
-    std::vector<Trigger> triggers;     // Список триггеров на уровне
-    // монетки
-    std::vector<sf::FloatRect> coins;
-    std::vector<sf::Sprite> coinSprites;
+    std::vector<TilesetInfo> tilesets;
+    std::vector<Trigger> triggers;
     struct BlockAnim
     {
         sf::Sprite sprite;
@@ -277,9 +331,28 @@ struct Level
         float duration = 0.2f;
         bool appearing = false;
     };
-
     std::vector<BlockAnim> animBlocks;
-
+    struct SpikeAnim
+    {
+        sf::Sprite sprite;
+        sf::FloatRect hitbox;
+        float timer = 0.f;
+        float duration = 0.15f;
+        bool appearing = true;
+        float startY;
+        float endY;
+    };
+    std::vector<SpikeAnim> animSpikes;
+    struct MovingPlatform
+    {
+        sf::Sprite sprite;
+        sf::FloatRect hitbox;
+        sf::Vector2f startPos;
+        sf::Vector2f endPos;
+        float speed = 55.f;
+        bool forward = true;
+    };
+    std::vector<MovingPlatform> platforms;
     bool loadFromFile(const std::string &path, int newTileSize)
     {
         tileSize = newTileSize; // Устанавливаем размер тайла (на всякий случай, если нужно изменить)
@@ -287,8 +360,12 @@ struct Level
         backgroundSprites.clear();
         blockSprites.clear();
         objectSprites.clear();
+        coins.clear();
+        platforms.clear();
+        shipSprite.clear();
         walls.clear();
         spikes.clear();
+        spikesR.clear();
         triggers.clear();
         hasExit = false;
 
@@ -443,7 +520,7 @@ struct Level
                             spikeWidth,
                             spikeHeight);
 
-                        objectSprites.push_back(sprite);
+                        shipSprite.push_back(sprite);
                     }
                     else if (localId == 1) // портал
                     {
@@ -479,12 +556,63 @@ struct Level
 
                         float coinX = x * tileSize + (tileSize - coinSize) / 2.f;
                         float coinY = y * tileSize + (tileSize - coinSize) / 2.f;
-
-                        coins.emplace_back(
+                        Coin coin;
+                        coin.hitbox = {
                             coinX,
                             coinY,
                             coinSize,
-                            coinSize);
+                            coinSize};
+                        coin.sprite = sprite;
+                        coins.push_back(coin);
+                    }
+                    else if (localId == 4) // 180 ship
+                    {
+                        float spikeWidth = tileSize * 0.8f;
+                        float spikeHeight = tileSize * 0.3f;
+
+                        float spikeX = x * tileSize + (tileSize - spikeWidth) * 0.5f;
+                        float spikeY = y * tileSize;
+
+                        spikesR.emplace_back(
+                            spikeX,
+                            spikeY,
+                            spikeWidth,
+                            spikeHeight);
+
+                        shipSprite.push_back(sprite);
+                    }
+                    else if (localId == 5) // портал
+                    {
+                        float scale = 2.f;
+
+                        sprite.setScale(scale, scale);
+
+                        sprite.setPosition(
+                            x * tileSize - tileSize * (scale - 1) * 1.f,
+                            y * tileSize - tileSize * (scale - 1) * 1.f);
+
+                        hasExit = true;
+
+                        exitRect = {
+                            sprite.getPosition().x,
+                            sprite.getPosition().y,
+                            tileSize * scale,
+                            tileSize * scale};
+
+                        objectSprites.push_back(sprite);
+                    }
+                    else if (localId == 6) // coin ship
+                    {
+                        float ShipSize = tileSize * 0.5f;
+
+                        float ShipcoinX = x * tileSize + (tileSize - ShipSize) / 2.f;
+                        float ShipcoinY = y * tileSize + (tileSize - ShipSize) / 2.f;
+
+                        spikes.emplace_back(
+                            ShipcoinX,
+                            ShipcoinY,
+                            ShipSize,
+                            ShipSize);
 
                         objectSprites.push_back(sprite);
                     }
@@ -510,17 +638,22 @@ struct Level
             t.cooldown = 0.f;
         }
     }
-
     void draw(sf::RenderWindow &window)
     {
         for (auto &s : backgroundSprites)
             window.draw(s);
-
-        for (auto &s : blockSprites)
-            window.draw(s);
-
         for (auto &s : objectSprites)
             window.draw(s);
+        for (auto &c : coins)
+            window.draw(c.sprite);
+        for (auto &s : shipSprite)
+            window.draw(s);
+        for (auto &a : animSpikes)
+            window.draw(a.sprite);
+        for (auto &s : blockSprites)
+            window.draw(s);
+        for (auto &p : platforms)
+            window.draw(p.sprite);
         for (auto &a : animBlocks)
             window.draw(a.sprite);
         // for (auto &t : triggers) // для дебага триггеров
@@ -673,6 +806,15 @@ struct Player
                 box = body.getGlobalBounds();
             }
         }
+        for (const auto &p : lvl.platforms)
+        {
+            if (box.intersects(p.hitbox))
+            {
+                body.setPosition(body.getPosition().x, p.hitbox.top - box.height);
+                onGround = true;
+                vel.y = 0;
+            }
+        }
     }
 
     void update(const Level &lvl, float dt)
@@ -813,39 +955,41 @@ struct Game
 
     void executeTrigger(Level::Trigger &t)
     {
-        if (t.action == "remove_spikes")
+        if (t.action == "remove_spike")
         {
-            level.spikes.clear();
+            for (int i = level.spikes.size() - 1; i >= 0; i--)
+            {
+                if (level.spikes[i].intersects(t.area))
+                {
+                    level.shipSprite.erase(level.shipSprite.begin() + i);
+                    level.spikes.erase(level.spikes.begin() + i);
+                }
+            }
+            for (int i = level.spikesR.size() - 1; i >= 0; i--)
+            {
+                if (level.spikesR[i].intersects(t.area))
+                {
+                    level.shipSprite.erase(level.shipSprite.begin() + i);
+                    level.spikesR.erase(level.spikesR.begin() + i);
+                }
+            }
         }
         else if (t.action == "remove_block")
         {
-            int best = -1;
-            float bestArea = 0.f;
-            for (int i = 0; i < level.walls.size(); i++)
+            for (int i = level.walls.size() - 1; i >= 0; i--)
             {
-                sf::FloatRect inter;
-                if (level.walls[i].intersects(t.area, inter))
+                if (level.walls[i].intersects(t.area))
                 {
-                    float area = inter.width * inter.height;
+                    Level::BlockAnim anim;
+                    anim.sprite = level.blockSprites[i];
+                    anim.duration = 0.2f;
+                    anim.appearing = false;
 
-                    if (area > bestArea)
-                    {
-                        bestArea = area;
-                        best = i;
-                    }
+                    level.animBlocks.push_back(anim);
+
+                    level.blockSprites.erase(level.blockSprites.begin() + i);
+                    level.walls.erase(level.walls.begin() + i);
                 }
-            }
-            if (best != -1)
-            {
-                Level::BlockAnim anim;
-                anim.sprite = level.blockSprites[best];
-                anim.duration = 0.2f;
-                anim.appearing = false;
-
-                level.animBlocks.push_back(anim);
-
-                level.blockSprites.erase(level.blockSprites.begin() + best);
-                level.walls.erase(level.walls.begin() + best);
             }
         }
         else if (t.action == "spawn_block")
@@ -887,19 +1031,177 @@ struct Game
             float spikeX = tileX * level.tileSize + (level.tileSize - spikeWidth) * 0.5f;
             float spikeY = (tileY + 1) * level.tileSize - spikeHeight;
 
-            level.spikes.emplace_back(
+            sf::Sprite s;
+            s.setTexture(level.texObj);
+            s.setTextureRect({0, 0, level.tileSize, level.tileSize});
+
+            s.setPosition(tileX * level.tileSize, tileY * level.tileSize);
+
+            Level::SpikeAnim anim;
+
+            anim.sprite = s;
+            anim.appearing = true;
+
+            anim.startY = s.getPosition().y + level.tileSize;
+            anim.endY = s.getPosition().y;
+
+            anim.sprite.setPosition(s.getPosition().x, anim.startY);
+
+            anim.hitbox = {
+                spikeX,
+                spikeY,
+                spikeWidth,
+                spikeHeight};
+
+            level.animSpikes.push_back(anim);
+        }
+        else if (t.action == "spawn_spikeR")
+        {
+            int tileX = (t.area.left + t.area.width * 0.5f) / level.tileSize;
+            int tileY = (t.area.top + t.area.height * 0.5f) / level.tileSize;
+
+            float spikeWidth = level.tileSize * 0.8f;
+            float spikeHeight = level.tileSize * 0.3f;
+
+            float spikeX = tileX * level.tileSize + (level.tileSize - spikeWidth) * 0.5f;
+            float spikeY = tileY * level.tileSize;
+
+            level.spikesR.emplace_back(
                 spikeX,
                 spikeY,
                 spikeWidth,
                 spikeHeight);
-
+            int tilesPerRow = level.texObj.getSize().x / level.tileSize;
+            int tx = 4 % tilesPerRow;
+            int ty = 4 / tilesPerRow;
             sf::Sprite sprite;
             sprite.setTexture(level.texObj);
-            sprite.setTextureRect({0, 0, level.tileSize, level.tileSize});
+            sprite.setTextureRect({tx * level.tileSize,
+                                   ty * level.tileSize,
+                                   level.tileSize,
+                                   level.tileSize});
 
             sprite.setPosition(tileX * level.tileSize, tileY * level.tileSize);
 
+            level.shipSprite.push_back(sprite);
+        }
+        else if (t.action == "spawn_block_area")
+        {
+            int startX = t.area.left / level.tileSize;
+            int endX = (t.area.left + t.area.width) / level.tileSize;
+
+            int startY = t.area.top / level.tileSize;
+            int endY = (t.area.top + t.area.height) / level.tileSize;
+
+            int tilesPerRow = level.texBlocks.getSize().x / level.tileSize;
+
+            int tx = t.tile % tilesPerRow;
+            int ty = t.tile / tilesPerRow;
+
+            for (int y = startY; y <= endY; y++)
+            {
+                for (int x = startX; x <= endX; x++)
+                {
+                    float px = x * level.tileSize;
+                    float py = y * level.tileSize;
+
+                    sf::Sprite s;
+                    s.setTexture(level.texBlocks);
+
+                    s.setTextureRect({tx * level.tileSize,
+                                      ty * level.tileSize,
+                                      level.tileSize,
+                                      level.tileSize});
+
+                    s.setPosition(px, py);
+
+                    Level::BlockAnim anim;
+
+                    anim.sprite = s;
+                    anim.duration = 0.2f;
+                    anim.appearing = true;
+
+                    anim.sprite.setOrigin(
+                        level.tileSize / 2.f,
+                        level.tileSize / 2.f);
+
+                    anim.sprite.setPosition(
+                        px + level.tileSize / 2.f,
+                        py + level.tileSize / 2.f);
+
+                    anim.sprite.setScale(0.f, 0.f);
+
+                    level.animBlocks.push_back(anim);
+                }
+            }
+        }
+        else if (t.action == "remove_portal")
+        {
+            level.hasExit = false;
+            level.objectSprites.clear();
+            level.spikes.clear();
+        }
+        else if (t.action == "spawn_portal")
+        {
+            int tileX = (t.area.left + t.area.width * 0.5f) / level.tileSize;
+            int tileY = (t.area.top + t.area.height * 0.5f) / level.tileSize;
+            sf::Sprite sprite;
+            sprite.setTexture(level.texObj);
+            int tilesPerRow = level.texObj.getSize().x / level.tileSize;
+            int tx = t.tile % tilesPerRow;
+            int ty = t.tile / tilesPerRow;
+            sprite.setTextureRect({tx * level.tileSize,
+                                   ty * level.tileSize,
+                                   level.tileSize,
+                                   level.tileSize});
+            float scale = 2.f;
+            sprite.setScale(scale, scale);
+            sprite.setPosition(
+                tileX * level.tileSize - level.tileSize * (scale - 1),
+                tileY * level.tileSize - level.tileSize * (scale - 1));
             level.objectSprites.push_back(sprite);
+            level.hasExit = true;
+            level.exitRect =
+                {
+                    sprite.getPosition().x,
+                    sprite.getPosition().y,
+                    level.tileSize * scale,
+                    level.tileSize * scale};
+        }
+        else if (t.action == "platform")
+        {
+            int tileX = t.area.left / level.tileSize;
+            int tileY = t.area.top / level.tileSize;
+
+            sf::Sprite s;
+            s.setTexture(level.texBlocks);
+            s.setTextureRect({0, 0, level.tileSize, level.tileSize});
+
+            s.setPosition(tileX * level.tileSize, tileY * level.tileSize);
+            int tilesPerRow = level.texBlocks.getSize().x / level.tileSize;
+
+            int tx = t.tile % tilesPerRow;
+            int ty = t.tile / tilesPerRow;
+
+            s.setTextureRect({tx * level.tileSize,
+                              ty * level.tileSize,
+                              level.tileSize,
+                              level.tileSize});
+            Level::MovingPlatform p;
+
+            p.sprite = s;
+            p.startPos = s.getPosition();
+            p.endPos = {
+                p.startPos.x + t.dx,
+                p.startPos.y + t.dy};
+
+            p.hitbox = {
+                p.startPos.x,
+                p.startPos.y,
+                level.tileSize,
+                level.tileSize};
+
+            level.platforms.push_back(p);
         }
     }
 
@@ -945,10 +1247,14 @@ struct Game
         level.backgroundSprites.clear();
         level.blockSprites.clear();
         level.objectSprites.clear();
+        level.shipSprite.clear();
+        level.animBlocks.clear();
+        level.animSpikes.clear();
         level.walls.clear();
         level.spikes.clear();
+        level.spikesR.clear();
         level.triggers.clear();
-
+        level.platforms.clear();
         // Перезагрузка уровня
         level.loadFromFile(currentLevelPath, level.tileSize);
 
@@ -1027,7 +1333,6 @@ struct Game
         }
 
         player.update(level, dt); // обычное обновление игрока
-
         for (auto it = level.animBlocks.begin(); it != level.animBlocks.end();)
         {
             it->timer += dt;
@@ -1049,7 +1354,6 @@ struct Game
 
                     float x = it->sprite.getPosition().x - level.tileSize / 2.f;
                     float y = it->sprite.getPosition().y - level.tileSize / 2.f;
-
                     sf::FloatRect newWall(
                         x,
                         y,
@@ -1071,9 +1375,51 @@ struct Game
             else
                 ++it;
         }
+        for (auto it = level.animSpikes.begin(); it != level.animSpikes.end();)
+        {
+            it->timer += dt;
 
+            float t = it->timer / it->duration;
+            if (t > 1.f)
+                t = 1.f;
+
+            float y = it->startY + (it->endY - it->startY) * t;
+
+            float x = it->sprite.getPosition().x;
+            it->sprite.setPosition(x, y);
+
+            if (it->timer >= it->duration)
+            {
+                level.spikes.push_back(it->hitbox);
+                level.shipSprite.push_back(it->sprite);
+
+                it = level.animSpikes.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+        for (auto &p : level.platforms)
+        {
+            sf::Vector2f pos = p.sprite.getPosition();
+            sf::Vector2f target = p.forward ? p.endPos : p.startPos;
+            sf::Vector2f dir = target - pos;
+            float len = sqrt(dir.x * dir.x + dir.y * dir.y);
+            if (len < 1.f)
+                p.forward = !p.forward;
+            else
+            {
+                dir /= len;
+                pos += dir * p.speed * dt;
+
+                p.sprite.setPosition(pos);
+
+                p.hitbox.left = pos.x;
+                p.hitbox.top = pos.y;
+            }
+        }
         sf::FloatRect box = player.body.getGlobalBounds();
-
         sf::Vector2i playerTile(
             (box.left + box.width * 0.5f) / level.tileSize,
             (box.top + box.height * 0.5f) / level.tileSize);
@@ -1134,15 +1480,23 @@ struct Game
                 return;
             }
         }
-        for (int i = 0; i < level.coins.size();)
+        for (auto &spikeR : level.spikesR)
         {
-            if (playerBox.intersects(level.coins[i]))
+            if (playerBox.intersects(spikeR))
+            {
+                player.alive = false;
+                waitingFor = true;
+                rHandled = false;
+                reactionClock.restart();
+                return;
+            }
+        }
+        for (int i = level.coins.size() - 1; i >= 0; i--)
+        {
+            if (playerBox.intersects(level.coins[i].hitbox))
             {
                 level.coins.erase(level.coins.begin() + i);
-                level.objectSprites.erase(level.objectSprites.begin() + i);
             }
-            else
-                i++;
         }
 
         // --- Финиш уровня --- //
@@ -1180,6 +1534,26 @@ struct Game
     }
     void draw(sf::RenderWindow &window)
     {
+        if (currentLevel == 5)
+        {
+            window.clear(sf::Color(26, 22, 15));
+        }
+        else if (currentLevel == 10)
+        {
+            window.clear(sf::Color(26, 22, 15));
+        }
+        else if (currentLevel == 15)
+        {
+            window.clear(sf::Color(26, 22, 15));
+        }
+        else if (currentLevel == 20)
+        {
+            window.clear(sf::Color(26, 22, 15));
+        }
+        else
+        {
+            window.clear(sf::Color(255, 156, 0));
+        }
         window.setView(camera);
         level.draw(window);
         player.draw(window);
@@ -1190,7 +1564,7 @@ struct Game
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(1280, 720), "One-file prototype");
+    sf::RenderWindow window(sf::VideoMode(1440, 900), "One-file prototype");
     window.setFramerateLimit(144);
     srand((unsigned)time(nullptr));
     MenuUI menu;
@@ -1217,15 +1591,15 @@ int main()
                 game.handleEvent(e);
             else
                 menu.handleEvent(e, window);
+            menu.update(window);
         }
-
         // Обновление логики
         if (screen == Screen::Game)
         {
-            game.start(selectedLevel); // Важно: сейчас вызывается каждый кадр, но внутри защита inited
+            game.start(selectedLevel); // Важно! сейчас вызывается каждый кадр, но внутри защита inited
             game.update(dt);
         }
-        window.clear(sf::Color(39, 15, 7)); // <-- ВНЕ КАРТЫ (основной цвет)
+        window.clear(sf::Color(218, 165, 32)); // <-- ВНЕ КАРТЫ (основной цвет)
         // Рисуем в зависимости от экрана
         if (screen == Screen::Game)
         {
@@ -1236,7 +1610,6 @@ int main()
             window.setView(window.getDefaultView()); // Возвращаем обычный view для UI
             menu.draw(window);
         }
-
         window.display(); // Показываем отрисованный кадр
     }
 }

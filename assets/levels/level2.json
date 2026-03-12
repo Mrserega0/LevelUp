@@ -114,139 +114,7 @@
                  "y":201.53440154297
                 }, 
                 {
-                 "height":16,
-                 "id":10,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":2
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":400.221319683988,
-                 "y":272.079856088424
-                }, 
-                {
-                 "height":16,
-                 "id":12,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":2
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":400.221319683988,
-                 "y":288.079856088424
-                }, 
-                {
-                 "height":16,
-                 "id":13,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":2
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":416.221319683988,
-                 "y":288.44349245206
-                }, 
-                {
-                 "height":16,
-                 "id":14,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":2
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":400.403137865806,
-                 "y":304.44349245206
-                }, 
-                {
-                 "height":16,
-                 "id":15,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":2
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":416.584956047624,
-                 "y":304.44349245206
-                }, 
-                {
-                 "height":16,
-                 "id":11,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":2
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":416.403137865806,
-                 "y":272.079856088424
-                }, 
-                {
-                 "height":16,
+                 "height":42.6420454545454,
                  "id":3,
                  "name":"",
                  "properties":[
@@ -263,13 +131,13 @@
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":16,
-                 "x":272.090909090909,
-                 "y":271.969696969697
+                 "width":26.7727272727273,
+                 "x":275.480106048715,
+                 "y":274.835347209549
                 }, 
                 {
-                 "height":16,
-                 "id":6,
+                 "height":40.3087121212121,
+                 "id":16,
                  "name":"",
                  "properties":[
                         {
@@ -280,102 +148,14 @@
                         {
                          "name":"chain",
                          "type":"int",
-                         "value":1
+                         "value":2
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":16,
-                 "x":271.909090909091,
-                 "y":288.333333333333
-                }, 
-                {
-                 "height":16,
-                 "id":7,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":1
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":271.909090909091,
-                 "y":304.515151515152
-                }, 
-                {
-                 "height":16,
-                 "id":8,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":1
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":288.090909090909,
-                 "y":304.333333333333
-                }, 
-                {
-                 "height":16,
-                 "id":9,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":1
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":287.727272727273,
-                 "y":288.333333333333
-                }, 
-                {
-                 "height":16,
-                 "id":5,
-                 "name":"",
-                 "properties":[
-                        {
-                         "name":"action",
-                         "type":"string",
-                         "value":"remove_block"
-                        }, 
-                        {
-                         "name":"chain",
-                         "type":"int",
-                         "value":1
-                        }],
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":287.909090909091,
-                 "y":271.969696969697
+                 "width":22.7727272727274,
+                 "x":404.813439382049,
+                 "y":277.168680542882
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -384,7 +164,7 @@
          "y":0
         }],
  "nextlayerid":4,
- "nextobjectid":16,
+ "nextobjectid":17,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
