@@ -1,0 +1,38 @@
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Debug MyGame",
+//             "type": "cppdbg",
+//             "request": "launch",
+//             "program": "${workspaceFolder}/main.exe",
+//             "args": [],
+//             "stopAtEntry": false,
+//             "cwd": "${workspaceFolder}",
+//             "environment": [],
+//             "preLaunchTask": "build cpp",
+//             "externalConsole": true,
+//             "MIMode": "gdb",
+//             "miDebuggerPath": "C:/mingw6414/mingw64/bin/gdb.exe"
+//         }
+//     ]
+// }
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug MyGame",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/main.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "preLaunchTask": "build SFML",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/mingw6414/mingw64/bin/gdb.exe"
+        }
+    ]
+}

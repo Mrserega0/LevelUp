@@ -1,0 +1,49 @@
+// {
+//     "version": "2.0.0",
+//     "tasks": [
+//         {
+//             "label": "build cpp",
+//             "type": "shell",
+//             "command": "C:\\mingw6414\\mingw64\\bin\\g++.exe",
+//             "args": [
+//                 "main.cpp",
+//                 "-o",
+//                 "main.exe"
+//             ],
+//             "group": {
+//                 "kind": "build",
+//                 "isDefault": true
+//             },
+//             "problemMatcher": ["$gcc"]
+//         }
+//     ]
+// }
+
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build SFML",
+            "type": "shell",
+            "command": "C:\\mingw6414\\mingw64\\bin\\g++.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-I\"C:/SFML1/include\"",
+                "-o",
+                "bin/${fileBasenameNoExtension}.exe",
+                "-Iinclude",
+                "-L\"C:/SFML1/lib\"",
+                "-lsfml-graphics",
+                "-lsfml-window",
+                "-lsfml-system"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
