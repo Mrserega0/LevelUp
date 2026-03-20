@@ -741,12 +741,12 @@ struct Player
         coinSound.setBuffer(coinBuffer);
         uronSound.setBuffer(uronBuffer);
         gravitySound.setBuffer(gravityBuffer);
-        stepSound.setVolume(150.f);
+        stepSound.setVolume(100.f);
         jumpSound.setVolume(25.f);
         deathSound.setVolume(100.f);
         coinSound.setVolume(100.f);
         uronSound.setVolume(100.f);
-        gravitySound.setVolume(50.f);
+        gravitySound.setVolume(350.f);
         return true;
     }
 

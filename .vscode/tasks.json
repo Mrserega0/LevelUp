@@ -30,6 +30,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
+                "icon.res",
                 "-I\"C:/SFML1/include\"",
                 "-o",
                 "bin/${fileBasenameNoExtension}.exe",
