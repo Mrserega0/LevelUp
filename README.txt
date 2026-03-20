@@ -17,4 +17,4 @@ tile {int} - выбирает локальный ID тайлсета, испол
 2) action.spawn_block
 3) action.remove_block
 4) action.remove_spikes
-5) action.chain_start - запускает по номеру chain триггеры
+5) action.chain_start - запускает по номеру chain триггеры.
