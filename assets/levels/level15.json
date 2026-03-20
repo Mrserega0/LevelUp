@@ -373,6 +373,114 @@
                 }, 
                 {
                  "height":16,
+                 "id":40,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"action",
+                         "type":"string",
+                         "value":"spawn_spike"
+                        }, 
+                        {
+                         "name":"chain",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"delay",
+                         "type":"float",
+                         "value":3.5
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":432,
+                 "y":256
+                }, 
+                {
+                 "height":16,
+                 "id":41,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"action",
+                         "type":"string",
+                         "value":"spawn_spike"
+                        }, 
+                        {
+                         "name":"chain",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"delay",
+                         "type":"float",
+                         "value":3.7
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":384,
+                 "y":256
+                }, 
+                {
+                 "height":16,
+                 "id":42,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"action",
+                         "type":"string",
+                         "value":"spawn_spike"
+                        }, 
+                        {
+                         "name":"chain",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"delay",
+                         "type":"float",
+                         "value":3.9
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":272,
+                 "y":256
+                }, 
+                {
+                 "height":16,
+                 "id":43,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"action",
+                         "type":"string",
+                         "value":"spawn_spike"
+                        }, 
+                        {
+                         "name":"chain",
+                         "type":"int",
+                         "value":4
+                        }, 
+                        {
+                         "name":"delay",
+                         "type":"float",
+                         "value":4.1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":128,
+                 "y":256
+                }, 
+                {
+                 "height":16,
                  "id":25,
                  "name":"",
                  "properties":[
@@ -579,7 +687,7 @@
          "y":0
         }],
  "nextlayerid":4,
- "nextobjectid":40,
+ "nextobjectid":44,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

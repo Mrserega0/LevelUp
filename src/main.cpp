@@ -1,4 +1,6 @@
 #include <SFML/Graphics.hpp> // Подключаем графику SFML: окно, спрайты/фигуры, текст, события // version 0.5
+#include <SFML/Audio.hpp>    // Подключаем аудио SFML: музыка, звуки (пока не используется, но пригодится для звуков прыжка/смерти)
+#include <SFML/Window.hpp>   // Подключаем окно SFML для управления окном и событиями (хотя sfml/graphics уже включает его, но на всякий случай)
 #include <string>            // std::string
 #include <vector>            // std::vector
 #include <fstream>           // чтение/запись файлов (progress.txt, уровни)
@@ -14,7 +16,7 @@ enum class Screen
     Levels, // Экран выбора уровней
     Game    // Игровой экран
 };
-
+static int Dead = 0;          // Счётчик смертей (статистика)
 int selectedLevel = 1;        // Текущий выбранный уровень (какой стартовать)
 Screen screen = Screen::Main; // Текущий активный экран (menu/levels/game)
 
@@ -29,7 +31,6 @@ struct Progress
 {
     int unlockedLevel = 1; // Максимальный открытый уровень (всё <= unlockedLevel доступно)
     int lastLevel = 1;     // Последний выбранный/игранный уровень (чтобы помнить меню)
-
     bool load(const std::string &path)
     {
         std::ifstream f(path); // Открываем файл сохранения
@@ -43,10 +44,11 @@ struct Progress
             lastLevel = 1;
             return false;
         }
-
+        f >> Dead;
         // Защита от некорректных значений (например, 0 или -5)
         unlockedLevel = std::max(1, unlockedLevel);
         lastLevel = std::max(1, lastLevel);
+        Dead = std::max(0, Dead);
         return true;
     }
 
@@ -56,7 +58,8 @@ struct Progress
         if (!f.is_open())
             return false;
 
-        f << unlockedLevel << " " << lastLevel; // Пишем два числа
+        f << unlockedLevel << " " << lastLevel << "\n"
+          << Dead; // Пишем три числа
         return true;
     }
 
@@ -280,6 +283,7 @@ struct Level
 
     std::vector<sf::FloatRect> walls;
     std::vector<sf::FloatRect> spikes;
+    std::vector<sf::FloatRect> spikesCoin;
     std::vector<sf::FloatRect> spikesR;
     std::vector<sf::Sprite> backgroundSprites;
     std::vector<sf::Sprite> blockSprites;
@@ -365,6 +369,7 @@ struct Level
         shipSprite.clear();
         walls.clear();
         spikes.clear();
+        spikesCoin.clear();
         spikesR.clear();
         triggers.clear();
         hasExit = false;
@@ -608,7 +613,7 @@ struct Level
                         float ShipcoinX = x * tileSize + (tileSize - ShipSize) / 2.f;
                         float ShipcoinY = y * tileSize + (tileSize - ShipSize) / 2.f;
 
-                        spikes.emplace_back(
+                        spikesCoin.emplace_back(
                             ShipcoinX,
                             ShipcoinY,
                             ShipSize,
@@ -691,7 +696,7 @@ struct Player
     bool KeyContol = true;      // true обычное управление. False наоборот
     bool gravityControl = true; // Обычная гравитация true. False потолок
     float moveSpeed = 100.f;    // Скорость движения по X. 100
-    float jumpSpeed = 205.f;    // Сила прыжка. 205
+    float jumpSpeed = 215.f;    // Сила прыжка. delault 205
     float gravity = 1200.f;     // Гравитация
     float animationTimer = 0.f;
     float animationSpeed = 0.1f;
@@ -701,11 +706,54 @@ struct Player
     const int frameCount = 3;
     int currentFrame = 0; // Текущий кадр анимации
 
+    sf::SoundBuffer stepBuffer;
+    sf::SoundBuffer jumpBuffer;
+    sf::SoundBuffer deathBuffer;
+    sf::SoundBuffer coinBuffer;
+    sf::SoundBuffer uronBuffer;
+    sf::SoundBuffer gravityBuffer;
+    sf::Sound stepSound;
+    sf::Sound jumpSound;
+    sf::Sound deathSound;
+    sf::Sound coinSound;
+    sf::Sound uronSound;
+    sf::Sound gravitySound;
+    sf::Clock stepClock;
+    float stepDelay = 0.4f;
+
+    bool loadSounds()
+    {
+        if (!stepBuffer.loadFromFile("assets/sounds/speed.wav"))
+            std::cout << "Failed to load step sound\n";
+        if (!jumpBuffer.loadFromFile("assets/sounds/jump.wav"))
+            std::cout << "Failed to load jump sound\n";
+        if (!deathBuffer.loadFromFile("assets/sounds/dead.wav"))
+            std::cout << "Failed to load death sound\n";
+        if (!coinBuffer.loadFromFile("assets/sounds/coin.wav"))
+            std::cout << "Failed to load coin sound\n";
+        if (!uronBuffer.loadFromFile("assets/sounds/uron.wav"))
+            std::cout << "Failed to load uron sound\n";
+        if (!gravityBuffer.loadFromFile("assets/sounds/gravity.wav"))
+            std::cout << "Failed to load gravity sound\n";
+        stepSound.setBuffer(stepBuffer);
+        jumpSound.setBuffer(jumpBuffer);
+        deathSound.setBuffer(deathBuffer);
+        coinSound.setBuffer(coinBuffer);
+        uronSound.setBuffer(uronBuffer);
+        gravitySound.setBuffer(gravityBuffer);
+        stepSound.setVolume(150.f);
+        jumpSound.setVolume(25.f);
+        deathSound.setVolume(100.f);
+        coinSound.setVolume(100.f);
+        uronSound.setVolume(100.f);
+        gravitySound.setVolume(50.f);
+        return true;
+    }
+
     bool init()
     {
         if (!Ptexture.loadFromFile("assets/img/playerAnimation.png"))
             return false;
-
         Psprite.setTexture(Ptexture);
         Psprite.setTextureRect(sf::IntRect(0, 0, frameWidth, frameHeight));
         Psprite.setOrigin(frameWidth / 2.f, frameHeight / 2.f);
@@ -721,20 +769,13 @@ struct Player
         vel = {0.f, 0.f};                           // Сбрасываем скорость
         onGround = false;                           // В воздухе до столкновения
         alive = true;                               // Жив
+        deathSound.play();
     }
     void updateSpriteScale()
     {
         float scaleX = body.getSize().x / (frameWidth);
         float scaleY = body.getSize().y / (frameHeight);
         Psprite.setScale(scaleX, scaleY);
-    }
-    void respawn()
-    {
-        // Возвращаем игрока в spawnPoint и сбрасываем физику
-        body.setPosition(spawnPoint.x + 3.f, spawnPoint.y + 2.f);
-        vel = {0.f, 0.f};
-        onGround = false;
-        alive = true;
     }
     void handleInput()
     {
@@ -765,6 +806,7 @@ struct Player
                 {
                     vel.y = +jumpSpeed;
                 }
+                jumpSound.play();
                 onGround = false; // мы в воздухе
             }
         }
@@ -793,6 +835,7 @@ struct Player
                 {
                     vel.y = +jumpSpeed;
                 }
+                jumpSound.play();
                 onGround = false; // мы в воздухе
             }
         }
@@ -910,6 +953,25 @@ struct Player
         {
             Psprite.setScale(-baseScaleX, baseScaleY);
         } // смотрим влево
+        if (!isMoving || !onGround) // если не двигаемся или в воздухе - стоп звук шагов
+        {
+            stepSound.stop();
+        }
+        if (isMoving && onGround)
+        {
+            if (stepClock.getElapsedTime().asSeconds() >= stepDelay)
+            {
+                stepSound.play();
+                stepClock.restart();
+            }
+        }
+        if (!alive)
+        {
+            if (deathSound.getStatus() == sf::Sound::Stopped)
+            {
+                deathSound.play();
+            }
+        }
     }
 
     void updateAnimation(float dt)
@@ -965,7 +1027,7 @@ struct Game
     sf::Clock portalClock;
     sf::Clock PlayerLevelClock;
     float transT = 0.f; // таймер для анимации перехода между уровнями (на 1.5 секунды, потом меняем уровень и обратно)
-    float transDuration = 1.5f;
+    float transDuration = 1.2f;
 
     int currentLevel = 1; // какой уровень сейчас в игре
 
@@ -979,6 +1041,33 @@ struct Game
         fade.setFillColor(sf::Color(0, 0, 0, 0));
     }
 
+    struct Pixel
+    {
+        sf::RectangleShape rect;
+        sf::Vector2f vel;
+        float life;
+    };
+    std::vector<Pixel> pixels;
+    void spawnPixels()
+    {
+        sf::Vector2f pos = player.body.getPosition();
+        sf::Vector2f size = player.body.getSize();
+
+        for (int i = 0; i < 20; i++)
+        {
+            Pixel p;
+            p.rect.setSize({size.x / 4.f, size.y / 4.f});
+            p.rect.setPosition(
+                pos.x + (std::rand() % (int)size.x),
+                pos.y + (std::rand() % (int)size.y));
+            p.rect.setFillColor(sf::Color::Black);
+            p.vel = {
+                (std::rand() % 200 - 100) / 10.f,
+                (std::rand() % 200 - 100) / 10.f};
+            p.life = 1.f;
+            pixels.push_back(p);
+        }
+    }
     void doRactions()
     {
         if (rHandled)
@@ -1013,6 +1102,10 @@ struct Game
         if (!player.init())
         {
             std::cout << "Failed to load player texture\n";
+        }
+        if (!player.loadSounds())
+        {
+            std::cout << "Failed to load player sounds\n";
         }
         // до player.spawn можно менять параметры игрока, например размер, скорость и т.д., чтобы они применились при спавне
         player.spawn(level.playerSpawn); // ставим игрока в точку спавна, заданную уровнем
@@ -1212,6 +1305,7 @@ struct Game
         {
             level.hasExit = false;
             level.objectSprites.clear();
+            level.spikesCoin.clear();
         }
         else if (t.action == "spawn_portal")
         {
@@ -1311,6 +1405,11 @@ struct Game
 
             level.objectSprites.push_back(sprite);
         }
+        else if (t.action == "clearspikes")
+        {
+            level.spikes.clear();
+            level.shipSprite.clear();
+        }
         else if (t.action == "keycontrolF")
         {
             player.KeyContol = false;
@@ -1321,22 +1420,56 @@ struct Game
         }
         else if (t.action == "gravityT")
         {
+            player.gravitySound.play();
             player.gravityControl = true;
             player.vel.y = 0;
         }
         else if (t.action == "gravityF")
         {
-            player.gravityControl = false; 
+            player.gravitySound.play();
+            player.gravityControl = false;
             player.vel.y = 0;
         }
-        else if(t.action == "speed50") { player.moveSpeed = 50.f; }
-        else if(t.action == "speed40") { player.moveSpeed = 40.f; }
-        else if(t.action == "speed30") { player.moveSpeed = 30.f; }
-        else if(t.action == "speed20") { player.moveSpeed = 20.f; }
-        else if(t.action == "speed100") { player.moveSpeed = 100.f; }
-        else if(t.action == "speed180") { player.moveSpeed = 180.f; }
-        else if(t.action == "speed200") { player.moveSpeed = 200.f; }
-        else if(t.action == "speed250") { player.moveSpeed = 250.f; }
+        else if (t.action == "speed50")
+        {
+            player.moveSpeed = 50.f;
+        }
+        else if (t.action == "speed40")
+        {
+            player.moveSpeed = 40.f;
+        }
+        else if (t.action == "speed30")
+        {
+            player.moveSpeed = 30.f;
+        }
+        else if (t.action == "speed20")
+        {
+            player.moveSpeed = 20.f;
+        }
+        else if (t.action == "speed100")
+        {
+            player.moveSpeed = 100.f;
+        }
+        else if (t.action == "speed180")
+        {
+            player.moveSpeed = 180.f;
+        }
+        else if (t.action == "speed200")
+        {
+            player.moveSpeed = 200.f;
+        }
+        else if (t.action == "speed250")
+        {
+            player.moveSpeed = 250.f;
+        }
+        else if (t.action == "jump400")
+        {
+            player.jumpSpeed = 400.f;
+        }
+        else if (t.action == "jump215")
+        {
+            player.jumpSpeed = 215.f;
+        }
     }
 
     void reset()
@@ -1391,6 +1524,7 @@ struct Game
         level.walls.clear();
         level.spikes.clear();
         level.spikesR.clear();
+        level.spikesCoin.clear();
         level.triggers.clear();
         level.platforms.clear();
         // Перезагрузка уровня
@@ -1456,12 +1590,28 @@ struct Game
         // Если игрок мёртв — либо ждём R, либо автотаймер 2 сек
         if (!player.alive)
         {
+            // ОБНОВЛЯЕМ ПИКСЕЛИ ВСЕГДА
+            for (auto it = pixels.begin(); it != pixels.end();)
+            {
+                it->life -= dt;
+
+                if (it->life <= 0.f)
+                {
+                    it = pixels.erase(it);
+                }
+                else
+                {
+                    it->rect.move(it->vel * dt);
+                    ++it;
+                }
+            }
+
             if (waitingFor && !rHandled)
             {
                 if (reactionClock.getElapsedTime().asSeconds() >= 0.5f)
                     doRactions();
             }
-            return; // пока мёртв — не обновляем физику
+            return;
         }
         if (transitioning)
         {
@@ -1528,11 +1678,23 @@ struct Game
             {
                 level.spikes.push_back(it->hitbox);
                 level.shipSprite.push_back(it->sprite);
-
                 it = level.animSpikes.erase(it);
             }
             else
             {
+                ++it;
+            }
+        }
+        for (auto it = pixels.begin(); it != pixels.end();)
+        {
+            it->life -= dt;
+            if (it->life <= 0.f)
+            {
+                it = pixels.erase(it);
+            }
+            else
+            {
+                it->rect.move(it->vel * dt);
                 ++it;
             }
         }
@@ -1624,8 +1786,11 @@ struct Game
             if (playerBox.intersects(spike))
             {
                 player.alive = false;
+                spawnPixels();
                 waitingFor = true;
                 rHandled = false;
+                Dead++;
+                player.uronSound.play();
                 reactionClock.restart();
                 return;
             }
@@ -1635,20 +1800,37 @@ struct Game
             if (playerBox.intersects(spikeR))
             {
                 player.alive = false;
+                spawnPixels();
                 waitingFor = true;
                 rHandled = false;
+                Dead++;
+                player.uronSound.play();
                 reactionClock.restart();
                 return;
             }
         }
-        for (int i = level.coins.size() - 1; i >= 0; i--)
+        for (auto &spikeCoin : level.spikesCoin)
+        {
+            if (playerBox.intersects(spikeCoin))
+            {
+                player.alive = false;
+                spawnPixels();
+                waitingFor = true;
+                rHandled = false;
+                Dead++;
+                player.uronSound.play();
+                reactionClock.restart();
+                return;
+            }
+        }
+        for (int i = level.coins.size() - 1; i >= 0; i--) // проверяем пересечение с монетками, если пересекаем — удаляем монетку
         {
             if (playerBox.intersects(level.coins[i].hitbox))
             {
+                player.coinSound.play();
                 level.coins.erase(level.coins.begin() + i);
             }
         }
-
         // --- Финиш уровня --- //
         if (level.hasExit && playerBox.intersects(level.exitRect))
         {
@@ -1658,13 +1840,16 @@ struct Game
                 ESC = false;
                 portalClock.restart();
             }
-            if (portalClock.getElapsedTime().asSeconds() >= 1.f)
+            if (!player.isMoving)
             {
-                if (!transitioning)
+                if (portalClock.getElapsedTime().asSeconds() >= 1.f)
                 {
-                    progress.onLevelComleted(currentLevel);
-                    progress.save(PROGRESS_PATH);
-                    startTransition();
+                    if (!transitioning)
+                    {
+                        progress.onLevelComleted(currentLevel);
+                        progress.save(PROGRESS_PATH);
+                        startTransition();
+                    }
                 }
             }
             return;
@@ -1676,9 +1861,10 @@ struct Game
         }
         if (player.body.getPosition().y > level.mapHeight * level.tileSize + 300.f)
         {
-            player.alive = false;    // умер
-            waitingFor = true;       // включаем режим ожидания
-            rHandled = false;        // разрешаем обработку R/таймера
+            player.alive = false; // умер
+            waitingFor = true;    // включаем режим ожидания
+            rHandled = false;     // разрешаем обработку R/таймера
+            Dead++;
             reactionClock.restart(); // старт таймера 2 секунды
         }
     }
@@ -1706,7 +1892,14 @@ struct Game
         }
         window.setView(camera);
         level.draw(window);
-        player.draw(window);
+        for (auto &p : pixels)
+        {
+            window.draw(p.rect);
+        }
+        if (player.alive)
+        {
+            player.draw(window);
+        }
         window.setView(window.getDefaultView());
         window.draw(fade);
     }

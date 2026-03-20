@@ -35,6 +35,7 @@
                 "bin/${fileBasenameNoExtension}.exe",
                 "-Iinclude",
                 "-L\"C:/SFML1/lib\"",
+                "-lsfml-audio",
                 "-lsfml-graphics",
                 "-lsfml-window",
                 "-lsfml-system"
